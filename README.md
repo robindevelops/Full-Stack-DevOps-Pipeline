@@ -14,6 +14,14 @@
 
 ---
 
+<div align="center">
+
+<img src="./architecture.png" alt="Full-Stack DevOps Pipeline Architecture" width="800"/>
+
+</div>
+
+---
+
 ## 📋 Table of Contents
 
 - [Project Overview](#-project-overview)
