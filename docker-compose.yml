@@ -1,6 +1,7 @@
 services:
   api:
     build: ./apps/api
+    image: taskflow/api
     container_name: task-flow-api
     ports:
       - "3000:3000"
@@ -10,6 +11,7 @@ services:
 
   frontend:
     build: ./apps/frontend
+    image: taskflow/frontend
     container_name: task-flow-frontend
     ports:
       - "80:80"
