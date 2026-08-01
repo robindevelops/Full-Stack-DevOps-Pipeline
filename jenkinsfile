@@ -1,178 +1,35 @@
+// ============================================================================
+// JENKINS ARCHITECTURE & DEPLOYMENT
+// ============================================================================
+// As you noted: Jenkins is typically installed on a Linux server (like Ubuntu).
+// In a real-world enterprise environment, Jenkins uses a Master-Agent (Slave) architecture:
+//
+// 1. MASTER NODE (The Brains):
+//    - This is the main Jenkins server.
+//    - It schedules the jobs, monitors the agents, and stores the configurations.
+//    - Best Practice: Never run actual heavy builds on the Master node, as it can crash it!
+//
+// 2. AGENT / SLAVE NODES (The Muscle):
+//    - Depending on company size, you might have 2, 10, or 100 agent nodes.
+//    - The Master node delegates the actual work (compiling code, building Docker images) 
+//      to these agent nodes.
+//    - Agents can be Ubuntu VMs, Windows machines, or even ephemeral 
+//      Docker/Kubernetes containers that spin up just for the build and die afterwards.
+// ============================================================================
+
+// The 'pipeline' block is where you define what the Master tells the Agents to do.
 pipeline {
+    // 'agent any' means the Master can pick any available Agent node to run this job.
+    // If you had specific nodes, you might write: agent { label 'ubuntu-node-1' }
     agent any
 
-    options {
-        timestamps()
-        ansiColor('xterm')
-        disableConcurrentBuilds()
-        buildDiscarder(logRotator(
-            numToKeepStr: '20',
-            artifactNumToKeepStr: '10'
-        ))
-        timeout(time: 30, unit: 'MINUTES')
-    }
-
-    environment {
-        APP_NAME       = "my-app"
-        IMAGE_NAME     = "your-dockerhub-username/my-app"
-        IMAGE_TAG      = "${BUILD_NUMBER}"
-        DOCKER_BUILDKIT = "1"
-    }
-
-    triggers {
-        // Uncomment if needed
-        // githubPush()
-    }
-
     stages {
-
-        stage('Checkout') {
+        // A 'stage' represents a distinct phase of your pipeline (e.g., Build, Test, Deploy).
+        stage('Example Stage') {
             steps {
-                echo "Checking out source code..."
-                checkout scm
+                // The actual commands the Agent will execute.
+                echo 'Hello from the Jenkins Agent!'
             }
-        }
-
-        stage('System Information') {
-            steps {
-                sh '''
-                echo "===== SYSTEM INFO ====="
-                hostname
-                whoami
-                pwd
-                uname -a
-                docker --version
-                git --version
-                '''
-            }
-        }
-
-        stage('Install Dependencies') {
-            steps {
-                sh '''
-                if [ -f package.json ]; then
-                    npm ci
-                elif [ -f requirements.txt ]; then
-                    pip install -r requirements.txt
-                elif [ -f pom.xml ]; then
-                    mvn clean compile
-                else
-                    echo "No dependency file found."
-                fi
-                '''
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                sh '''
-                if [ -f package.json ]; then
-                    npm test || true
-                elif [ -f pom.xml ]; then
-                    mvn test
-                else
-                    echo "No tests configured."
-                fi
-                '''
-            }
-        }
-
-        stage('Lint') {
-            steps {
-                sh '''
-                if [ -f package.json ]; then
-                    npm run lint || true
-                fi
-                '''
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh '''
-                docker build \
-                  -t ${IMAGE_NAME}:${IMAGE_TAG} \
-                  -t ${IMAGE_NAME}:latest .
-                '''
-            }
-        }
-
-        stage('Image Scan') {
-            steps {
-                sh '''
-                if command -v trivy >/dev/null 2>&1; then
-                    trivy image \
-                        --exit-code 0 \
-                        --severity HIGH,CRITICAL \
-                        ${IMAGE_NAME}:${IMAGE_TAG}
-                else
-                    echo "Trivy not installed. Skipping scan."
-                fi
-                '''
-            }
-        }
-
-        stage('Push Image') {
-            when {
-                branch 'main'
-            }
-
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )
-                ]) {
-
-                    sh '''
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-
-                    docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                    docker push ${IMAGE_NAME}:latest
-
-                    docker logout
-                    '''
-                }
-            }
-        }
-
-        stage('Deploy') {
-            when {
-                branch 'main'
-            }
-
-            steps {
-                echo "Deploy stage..."
-                // Example:
-                // sh './deploy.sh'
-                // sh 'kubectl apply -f k8s/'
-                // sh 'docker compose up -d'
-            }
-        }
-    }
-
-    post {
-
-        success {
-            echo "Build succeeded."
-        }
-
-        failure {
-            echo "Build failed."
-        }
-
-        unstable {
-            echo "Build unstable."
-        }
-
-        always {
-            sh '''
-            docker image prune -f || true
-            '''
-
-            cleanWs()
         }
     }
 }

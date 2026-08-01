@@ -40,4 +40,5 @@ EXPOSE 3000
 # Use dumb-init as the entrypoint, and run node directly (not npm start)
 # npm swallows system signals (like SIGTERM), preventing graceful shutdowns in Kubernetes
 ENTRYPOINT ["dumb-init", "--"]
+
 CMD ["node", "server.js"]

@@ -1,20 +1,107 @@
 services:
   api:
     build: ./apps/api
-    image: taskflow/api
+    image: taskflow-api:latest
     container_name: task-flow-api
+
     ports:
       - "3000:3000"
+
     environment:
-      - NODE_ENV=production
-    restart: always
+      NODE_ENV: production
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgresql:5432/${POSTGRES_DB}
+
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    restart: unless-stopped
+
+    networks:
+      - task-flow
 
   frontend:
     build: ./apps/frontend
-    image: taskflow/frontend
+    image: taskflow-frontend:latest
     container_name: task-flow-frontend
+
     ports:
       - "80:80"
+
     depends_on:
-      - api
-    restart: always
+      api:
+        condition: service_started
+
+    restart: unless-stopped
+
+    networks:
+      - task-flow
+
+  redis:
+    image: redis:7
+    container_name: taskflow-redis
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+    restart: unless-stopped
+
+    networks:
+      - task-flow
+
+  postgresql:
+    image: postgres:16-alpine
+    container_name: taskflow-postgres
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+    restart: unless-stopped
+
+    networks:
+      - task-flow
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: taskflow-jenkins
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    restart: unless-stopped
+
+    networks:
+      - task-flow
+
+volumes:
+  postgres_data:
+  redis_data:
+  jenkins_home:
+
+networks:
+  task-flow:
+    driver: bridge
