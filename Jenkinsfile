@@ -80,18 +80,21 @@ parameters{
             }
         }
 
-        stage('push image to docker hub'){
-            steps{
+        stage('Push Images to Docker Hub') {
+            steps {
                 echo 'Pushing images to Docker Hub...'
                 
-                // Login to Docker Hub using Jenkins credentials
+                // Keep login, push, and logout all inside the credentials wrapper
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    // Use single quotes for secrets so Bash evaluates them securely
                     sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    
+                    // Use double quotes here so Groovy can inject ${params.VERSION}
+                    sh "docker push ${Docker_FRONTEND_USERNAME}/${APP_NAME}:frontend-${params.VERSION}"
+                    sh "docker push ${Docker_API_USERNAME}/${APP_NAME}:api-${params.VERSION}"
+                    
+                    sh 'docker logout'
                 }
-                
-                // Push both images
-                sh "docker push ${Docker_FRONTEND_USERNAME}/${APP_NAME}:frontend-${params.VERSION}"
-                sh "docker push ${Docker_API_USERNAME}/${APP_NAME}:api-${params.VERSION}"
             }
         }
         stage('deploy'){
