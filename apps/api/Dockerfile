@@ -7,9 +7,9 @@ WORKDIR /app
 # Copy package files first to leverage Docker layer caching
 COPY package*.json ./
 
-# Use 'npm ci' for deterministic, repeatable builds
-# --omit=dev ensures we don't install devDependencies in production
-RUN npm ci --omit=dev
+# Use 'npm install' instead of 'npm ci' to avoid lockfile version 
+# mismatches between your local machine and the Docker container.
+RUN npm install --omit=dev
 
 # Copy the rest of the application code
 COPY . .
