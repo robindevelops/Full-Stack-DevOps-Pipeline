@@ -13,10 +13,10 @@ pipeline {
             steps{
                 echo 'install dependency'
                dir('apps/api') {
-                    sh 'npm ci' 
+                    sh 'npm install' 
                }
                dir('apps/frontend') {
-                    sh 'npm ci' 
+                    sh 'npm install' 
                }
             }
         }
