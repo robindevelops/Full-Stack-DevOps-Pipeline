@@ -1,5 +1,16 @@
 pipeline {
     agent any
+
+environment{
+    APP_NAME = "TaskFlow"
+    Docker_FRONTEND_USERNAME = credentials('frontend')
+    Docker_API_USERNAME = credentials('api')
+}
+parameters{
+    string(name: 'VERSION', defaultValue: '1.0.0', description: 'Version of the application')
+    
+}
+
     stages{
         stage('checkout'){
             steps {
@@ -22,17 +33,9 @@ pipeline {
         }
         stage('lint'){
             steps{
-echo 'linting'
+                echo 'linting'
 
-                // NOTE: Commented out because backend doesn't have a lint script yet!
-                // dir('apps/api') {
-                //     sh 'npm run lint' 
-                // }
-            //    NOTE: 'oxlint' is throwing a fatal OS-level "Bus error" inside 
-            //    the Jenkins Docker container due to an architecture mismatch.
-            //    dir('apps/frontend') {
-            //         sh 'npm run lint' 
-            //    }
+ 
             }
         }
         stage('test'){
@@ -48,7 +51,7 @@ echo 'linting'
         }
         stage('build'){
             steps{
-               echo 'building'
+                echo "Building ${APP_NAME} version ${params.VERSION}"
         
                 // The Node.js backend does not need a "build" step since it's 
                 // raw JavaScript and doesn't use TypeScript or Webpack!
@@ -62,6 +65,13 @@ echo 'linting'
         stage('build docker image'){
             steps{
                 echo 'build docker image'
+                
+                dir("apps/frontend"){
+                    sh "docker build -t ${Docker_FRONTEND_USERNAME}/${APP_NAME}:frontend-${params.VERSION} ."
+                }
+                dir("apps/api"){
+                    sh "docker build -t ${Docker_API_USERNAME}/${APP_NAME}:api-${params.VERSION} ."
+                }
             }
         }
         stage('trivy scan'){
@@ -72,7 +82,16 @@ echo 'linting'
 
         stage('push image to docker hub'){
             steps{
-                echo 'push image to docker hub'
+                echo 'Pushing images to Docker Hub...'
+                
+                // Login to Docker Hub using Jenkins credentials
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                }
+                
+                // Push both images
+                sh "docker push ${Docker_FRONTEND_USERNAME}/${APP_NAME}:frontend-${params.VERSION}"
+                sh "docker push ${Docker_API_USERNAME}/${APP_NAME}:api-${params.VERSION}"
             }
         }
         stage('deploy'){
@@ -91,6 +110,17 @@ echo 'linting'
             }
         }
 
+    }
+    post{
+        success{
+            echo 'Pipeline completed successfully'
+        }
+        failure{
+            echo 'Pipeline failed'
+        }
+        cleanup{
+            echo 'Cleaning up'
+        }
     }
 }
 
