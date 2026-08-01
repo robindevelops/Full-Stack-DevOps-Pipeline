@@ -2,9 +2,11 @@ pipeline {
     agent any
     stages{
         stage('checkout'){
-            echo 'Checking out source code...'
-            git scm
-            sh 'ls -la'
+            steps {
+                echo 'Checking out source code...'
+                checkout scm
+                sh 'ls -la'
+            }
         }
 
         stage('install dependency'){
@@ -20,9 +22,10 @@ pipeline {
         }
         stage('lint'){
             steps{
-                dir('apps/api') {
-                    sh 'npm run lint' 
-               }
+                // NOTE: Commented out because backend doesn't have a lint script yet!
+                // dir('apps/api') {
+                //     sh 'npm run lint' 
+                // }
                dir('apps/frontend') {
                     sh 'npm run lint' 
                }
