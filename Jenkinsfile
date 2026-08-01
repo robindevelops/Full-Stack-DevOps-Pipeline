@@ -13,10 +13,10 @@ pipeline {
             steps{
                 echo 'install dependency'
                dir('apps/api') {
-                    sh 'npm install' 
+                    sh 'npm install --fetch-retries=5 --fetch-timeout=600000' 
                }
                dir('apps/frontend') {
-                    sh 'npm install' 
+                    sh 'npm install --fetch-retries=5 --fetch-timeout=600000' 
                }
             }
         }
