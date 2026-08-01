@@ -1,35 +1,93 @@
-// ============================================================================
-// JENKINS ARCHITECTURE & DEPLOYMENT
-// ============================================================================
-// As you noted: Jenkins is typically installed on a Linux server (like Ubuntu).
-// In a real-world enterprise environment, Jenkins uses a Master-Agent (Slave) architecture:
-//
-// 1. MASTER NODE (The Brains):
-//    - This is the main Jenkins server.
-//    - It schedules the jobs, monitors the agents, and stores the configurations.
-//    - Best Practice: Never run actual heavy builds on the Master node, as it can crash it!
-//
-// 2. AGENT / SLAVE NODES (The Muscle):
-//    - Depending on company size, you might have 2, 10, or 100 agent nodes.
-//    - The Master node delegates the actual work (compiling code, building Docker images) 
-//      to these agent nodes.
-//    - Agents can be Ubuntu VMs, Windows machines, or even ephemeral 
-//      Docker/Kubernetes containers that spin up just for the build and die afterwards.
-// ============================================================================
-
-// The 'pipeline' block is where you define what the Master tells the Agents to do.
 pipeline {
-    // 'agent any' means the Master can pick any available Agent node to run this job.
-    // If you had specific nodes, you might write: agent { label 'ubuntu-node-1' }
     agent any
+    stages{
+        stage('checkout'){
+            echo 'Checking out source code...'
+            git scm
+            sh 'ls -la'
+        }
 
-    stages {
-        // A 'stage' represents a distinct phase of your pipeline (e.g., Build, Test, Deploy).
-        stage('Example Stage') {
-            steps {
-                // The actual commands the Agent will execute.
-                echo 'Hello from the Jenkins Agents!'
+        stage('install dependency'){
+            steps{
+                echo 'install dependency'
+               dir('apps/api') {
+                    sh 'npm ci' 
+               }
+               dir('apps/frontend') {
+                    sh 'npm ci' 
+               }
             }
         }
+        stage('lint'){
+            steps{
+                dir('apps/api') {
+                    sh 'npm run lint' 
+               }
+               dir('apps/frontend') {
+                    sh 'npm run lint' 
+               }
+            }
+        }
+        stage('test'){
+            steps{
+                dir('apps/api') {
+                    sh 'npm run test' 
+               }
+               dir('apps/frontend') {
+                    sh 'npm run test' 
+               }
+            }
+        }
+        stage('build'){
+            steps{
+                dir('apps/frontend') {
+                    sh 'npm run build'
+                }
+        
+                // The Node.js backend does not need a "build" step since it's 
+                // raw JavaScript and doesn't use TypeScript or Webpack!
+            }
+        }
+        stage('code quality'){
+            steps{
+                echo 'code quality'
+            }
+        }
+        stage('build docker image'){
+            steps{
+                echo 'build docker image'
+            }
+        }
+        stage('trivy scan'){
+            steps{
+                echo 'trivy scan'
+            }
+        }
+
+        stage('push image to docker hub'){
+            steps{
+                echo 'push image to docker hub'
+            }
+        }
+        stage('deploy'){
+            steps{
+                echo 'code notify'
+            }
+        }
+        stage('health check'){
+            steps{
+                echo 'health check'
+            }
+        }
+        stage('slack notification'){
+            steps{
+                echo 'slack notification'
+            }
+        }
+
     }
 }
+
+
+
+
