@@ -22,15 +22,17 @@ pipeline {
         }
         stage('lint'){
             steps{
+echo 'linting'
+
                 // NOTE: Commented out because backend doesn't have a lint script yet!
                 // dir('apps/api') {
                 //     sh 'npm run lint' 
                 // }
-               // NOTE: 'oxlint' is throwing a fatal OS-level "Bus error" inside 
-               // the Jenkins Docker container due to an architecture mismatch.
-               // dir('apps/frontend') {
-               //      sh 'npm run lint' 
-               // }
+            //    NOTE: 'oxlint' is throwing a fatal OS-level "Bus error" inside 
+            //    the Jenkins Docker container due to an architecture mismatch.
+            //    dir('apps/frontend') {
+            //         sh 'npm run lint' 
+            //    }
             }
         }
         stage('test'){
