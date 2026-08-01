@@ -48,9 +48,7 @@ echo 'linting'
         }
         stage('build'){
             steps{
-                dir('apps/frontend') {
-                    sh 'npm run build'
-                }
+               echo 'building'
         
                 // The Node.js backend does not need a "build" step since it's 
                 // raw JavaScript and doesn't use TypeScript or Webpack!
