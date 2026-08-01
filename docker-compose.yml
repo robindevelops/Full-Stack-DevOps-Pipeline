@@ -84,6 +84,7 @@ services:
   jenkins:
     image: jenkins/jenkins:lts
     container_name: taskflow-jenkins
+    user: root
 
     ports:
       - "8080:8080"
