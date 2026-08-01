@@ -28,7 +28,7 @@ pipeline {
         stage('Example Stage') {
             steps {
                 // The actual commands the Agent will execute.
-                echo 'Hello from the Jenkins Agent!'
+                echo 'Hello from the Jenkins Agents!'
             }
         }
     }
