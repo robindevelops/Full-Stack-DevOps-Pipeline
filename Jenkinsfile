@@ -8,7 +8,9 @@ pipeline {
             description: 'Version of the application'
         )
     }
-
+tools {
+        nodejs 'Node-18' // Must match the name you gave in Global Tool Configuration
+    }
     stages {
 
         stage('Checkout') {
