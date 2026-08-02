@@ -84,11 +84,11 @@ pipeline {
                 echo 'Building Docker images...'
 
                 dir('apps/frontend') {
-                    sh "docker build -t alya12/taskflow:frontend-${params.VERSION} ."
+                    sh "docker build -t alyan12/taskflow:frontend-${params.VERSION} ."
                 }
 
                 dir('apps/api') {
-                    sh "docker build -t alya12/taskflow:api-${params.VERSION} ."
+                    sh "docker build -t alyan12/taskflow:api-${params.VERSION} ."
                 }
             }
         }
